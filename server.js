@@ -4,7 +4,16 @@ const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 const app = express();
-app.use(cors());
+
+// ✅ CORS Setup - allow only your frontend URL for security
+app.use(
+  cors({
+    origin: "https://regal-maamoul-8f0bdb.netlify.app", // ✅ Replace with your actual Netlify frontend URL
+    methods: ["POST", "GET"],
+    credentials: false,
+  })
+);
+
 app.use(express.json());
 
 app.post("/api/contact", async (req, res) => {
@@ -34,10 +43,10 @@ app.post("/api/contact", async (req, res) => {
 
     res.status(200).json({ message: "Email sent successfully" });
   } catch (error) {
-    console.error(error);
+    console.error("Email sending failed:", error);
     res.status(500).json({ message: "Email sending failed" });
   }
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server started on port ${PORT}`));
