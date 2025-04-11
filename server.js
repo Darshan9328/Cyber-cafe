@@ -9,7 +9,7 @@ require("dotenv").config();
 const app = express();
 app.use(express.json());
 app.use(cors({ origin: "https://regal-maamoul-8f0bdb.netlify.app" })); // your Netlify frontend
-app.use(express.static(path.join(__dirname, "public")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 const IMAGE_PATH = path.join(__dirname, "uploads/images.json");
 
