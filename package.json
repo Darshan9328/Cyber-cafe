@@ -1,5 +1,5 @@
 {
-  "name": "cybercafe-contact-api",
+  "name": "cybercafe-backend",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
@@ -7,8 +7,10 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
+    "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "nodemailer": "^6.9.4"
+    "fs": "^0.0.1-security",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.1"
   }
 }
