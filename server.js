@@ -3,29 +3,19 @@ const cors = require("cors");
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
+const sharp = require("sharp");
 const nodemailer = require("nodemailer");
 require("dotenv").config();
 
 const app = express();
 app.use(express.json());
-app.use(cors({ origin: "https://regal-maamoul-8f0bdb.netlify.app" })); // your Netlify frontend
+app.use(cors({ origin: "*" }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 const IMAGE_PATH = path.join(__dirname, "uploads/images.json");
 
-// Image Upload Setup
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dir = "uploads";
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-    cb(null, dir);
-  },
-  filename: (req, file, cb) => {
-    const unique = `${Date.now()}-${file.originalname}`;
-    cb(null, unique);
-  },
-});
-const upload = multer({ storage });
+// Storage to memory for sharp processing
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Get carousel images
 app.get("/api/images", (req, res) => {
@@ -35,15 +25,36 @@ app.get("/api/images", (req, res) => {
   res.json(images);
 });
 
-// Add image
-app.post("/api/images", upload.single("image"), (req, res) => {
-  const imageUrl = `/uploads/${req.file.filename}`;
-  const images = fs.existsSync(IMAGE_PATH)
-    ? JSON.parse(fs.readFileSync(IMAGE_PATH))
-    : [];
-  images.push({ url: imageUrl });
-  fs.writeFileSync(IMAGE_PATH, JSON.stringify(images));
-  res.status(201).json({ message: "Image uploaded", url: imageUrl });
+// Add and resize image
+app.post("/api/images", upload.single("image"), async (req, res) => {
+  try {
+    const filename = `${Date.now()}-${req.file.originalname.replace(
+      /\s+/g,
+      "-"
+    )}`;
+    const outputPath = path.join(__dirname, "uploads", filename);
+
+    // Resize to 1200x500 and save
+   await sharp(req.file.buffer)
+     .resize({
+       width: 1200,
+       height: 500,
+       fit: "contain",
+       background: { r: 255, g: 255, b: 255, alpha: 1 },
+     })
+     .toFile(outputPath);
+
+    const imageUrl = `/uploads/${filename}`;
+    const images = fs.existsSync(IMAGE_PATH)
+      ? JSON.parse(fs.readFileSync(IMAGE_PATH))
+      : [];
+    images.push({ url: imageUrl });
+    fs.writeFileSync(IMAGE_PATH, JSON.stringify(images));
+    res.status(201).json({ message: "Image uploaded", url: imageUrl });
+  } catch (error) {
+    console.error("Image upload failed:", error);
+    res.status(500).json({ message: "Image upload failed" });
+  }
 });
 
 // Delete image
